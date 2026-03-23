@@ -216,6 +216,13 @@ export default function DashboardPage() {
           <GlobalKPICards />
         </div>
 
+        {/* Demo Data Notice */}
+        <div className="mb-6 bg-yellow-50 border border-yellow-300 rounded-lg px-4 py-3 flex items-center gap-2">
+          <span className="text-yellow-600 text-lg">⚠️</span>
+          <p className="text-sm text-yellow-800 font-medium">
+            NOTE: All the data in the dashboard is demo data. No real-world data is related to this.
+          </p>
+        </div>
 
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar - Enhanced Filter Panel */}
