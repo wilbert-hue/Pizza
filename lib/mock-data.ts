@@ -35,14 +35,38 @@ export function createMockData(): ComparisonData {
         all_geographies: ['Global']
       },
       segments: {
-        'By End-Use*Product Type': {
+        'By Temperature / Preservation Technology': {
+          type: 'flat',
+          items: ['Ambient / Shelf-Stable Pizza', 'Chilled / Refrigerated Pizza', 'Frozen Pizza'],
+          hierarchy: {}
+        },
+        'By Product Structure': {
+          type: 'flat',
+          items: ['Finished / Topped Pizza', 'Plain / Neutral Pizza Base', 'Filled / Folded Pizza Products'],
+          hierarchy: {}
+        },
+        'By Pizza Type / Style': {
+          type: 'flat',
+          items: ['Traditional Round Pizza', 'Pizza Romana', 'Pinsa', 'Other Regional / Specialty Pizza Styles'],
+          hierarchy: {}
+        },
+        'By Serving Format': {
+          type: 'flat',
+          items: ['Individual / Single-Serve', 'Shared / Multi-Serve', 'Foodservice Bulk / Back-of-House Format'],
+          hierarchy: {}
+        },
+        'By Crust / Dough Characteristics': {
+          type: 'flat',
+          items: ['Thin Crust', 'Regular Crust', 'Thick / Pan Crust', 'Artisanal / Airy / High-Hydration Crust'],
+          hierarchy: {}
+        },
+        'By End-Use Channel': {
           type: 'hierarchical',
-          items: [],
-          hierarchy: {},
-          b2b_hierarchy: {},
-          b2c_hierarchy: {},
-          b2b_items: [],
-          b2c_items: []
+          items: ['Foodservice / Out-of-Home', 'Quick Service Restaurants (QSR)', 'Full Service Restaurants (FSR)', 'Hotels', 'Cafés / Bakeries', 'Institutional Foodservice', 'Other Foodservice', 'Retail / In-Home', 'Hypermarkets / Supermarkets', 'Convenience Stores', 'Specialty Food Stores', 'Online Retail / E-commerce', 'Other Retail'],
+          hierarchy: {
+            'Foodservice / Out-of-Home': ['Quick Service Restaurants (QSR)', 'Full Service Restaurants (FSR)', 'Hotels', 'Cafés / Bakeries', 'Institutional Foodservice', 'Other Foodservice'],
+            'Retail / In-Home': ['Hypermarkets / Supermarkets', 'Convenience Stores', 'Specialty Food Stores', 'Online Retail / E-commerce', 'Other Retail']
+          }
         }
       }
     },

@@ -1,28 +1,48 @@
 {
   "Global": {
-    "By Type": {
-      "Sub-Normothermic Perfusion (20–34°C)": {},
-      "Warm or Normothermic Perfusion (35–37°C)": {}
+    "By Temperature / Preservation Technology": {
+      "Ambient / Shelf-Stable Pizza": {},
+      "Chilled / Refrigerated Pizza": {},
+      "Frozen Pizza": {}
     },
-    "By Organ Type": {
-      "Liver": {},
-      "Heart": {},
-      "Lung": {},
-      "Kidney": {},
-      "Others (Pancreas, Small bowel / Intestine, Composite Tissues / Limb Perfusion (emerging use cases))": {}
+    "By Product Structure": {
+      "Finished / Topped Pizza": {},
+      "Plain / Neutral Pizza Base": {},
+      "Filled / Folded Pizza Products": {}
     },
-    "Application / Use Case": {
-      "Organ Preservation": {},
-      "Viability Assessment": {},
-      "Physiologic Transport": {},
-      "Reconditioning Marginal Organs": {},
-      "Others (Research Use / Protocol development)": {}
+    "By Pizza Type / Style": {
+      "Traditional Round Pizza": {},
+      "Pizza Romana": {},
+      "Pinsa": {},
+      "Other Regional / Specialty Pizza Styles": {}
     },
-    "By End User": {
-      "Hospitals & Clinics": {},
-      "Specialty Clinic/Centers": {},
-      "Transplant Centers": {},
-      "Others (Research Institutes/Centers, Organ Procurement Organizations, etc.)": {}
+    "By Serving Format": {
+      "Individual / Single-Serve": {},
+      "Shared / Multi-Serve": {},
+      "Foodservice Bulk / Back-of-House Format": {}
+    },
+    "By Crust / Dough Characteristics": {
+      "Thin Crust": {},
+      "Regular Crust": {},
+      "Thick / Pan Crust": {},
+      "Artisanal / Airy / High-Hydration Crust": {}
+    },
+    "By End-Use Channel": {
+      "Foodservice / Out-of-Home": {
+        "Quick Service Restaurants (QSR)": {},
+        "Full Service Restaurants (FSR)": {},
+        "Hotels": {},
+        "Cafés / Bakeries": {},
+        "Institutional Foodservice": {},
+        "Other Foodservice": {}
+      },
+      "Retail / In-Home": {
+        "Hypermarkets / Supermarkets": {},
+        "Convenience Stores": {},
+        "Specialty Food Stores": {},
+        "Online Retail / E-commerce": {},
+        "Other Retail": {}
+      }
     },
     "By Region": {
       "North America": {
