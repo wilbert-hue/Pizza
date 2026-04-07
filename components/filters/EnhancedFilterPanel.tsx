@@ -65,6 +65,32 @@ export function EnhancedFilterPanel() {
     // No need to reset segment type - allow all segment types for both value and volume
     // The data processor handles both datasets with the same segment types
   }, [filters.dataType])
+
+  // Reset segment type if it isn't supported by the currently selected geographies
+  // (e.g. when leaving Italy while "Italy Cross-Segment Analysis" is active).
+  useEffect(() => {
+    if (!data) return
+    const geos = filters.geographies || []
+    if (geos.length === 0) return
+    const recs = filters.dataType === 'volume'
+      ? data.data.volume.geography_segment_matrix
+      : data.data.value.geography_segment_matrix
+    const supported = new Set<string>()
+    for (const r of recs) {
+      if (geos.includes(r.geography)) supported.add(r.segment_type)
+    }
+    if (supported.size === 0) return
+    const active = filters.segmentType || selectedSegmentType
+    if (active && !supported.has(active)) {
+      const next = Object.keys(data.dimensions.segments).find(t => supported.has(t))
+      if (next) {
+        setSelectedSegmentType(next)
+        setSelectedSegments([])
+        updateFilters({ segmentType: next, segments: [], advancedSegments: [] } as any)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, filters.geographies, filters.segmentType, filters.dataType])
   
   // Clear selected segments when business type changes and segment type has B2B/B2C
   const segmentDimension = data?.dimensions?.segments?.[selectedSegmentType]
@@ -250,7 +276,7 @@ export function EnhancedFilterPanel() {
   // Get all segment types
   // For volume mode, only show segment types that have actual volume records
   const allSegmentTypes = Object.keys(data.dimensions.segments)
-  const segmentTypes = filters.dataType === 'volume'
+  let segmentTypes = filters.dataType === 'volume'
     ? (() => {
         const volumeRecords = data.data.volume.geography_segment_matrix
         const volumeSegTypes = new Set(volumeRecords.map(r => r.segment_type))
@@ -258,6 +284,22 @@ export function EnhancedFilterPanel() {
         return filtered.length > 0 ? filtered : allSegmentTypes
       })()
     : allSegmentTypes
+
+  // Drop segment types that have no records for the currently selected geographies
+  // (so e.g. "Italy Cross-Segment Analysis" only appears when Italy is selected).
+  const selectedGeos = filters.geographies || []
+  if (selectedGeos.length > 0) {
+    const records = filters.dataType === 'volume'
+      ? data.data.volume.geography_segment_matrix
+      : data.data.value.geography_segment_matrix
+    const supported = new Set<string>()
+    for (const r of records) {
+      if (selectedGeos.includes(r.geography)) supported.add(r.segment_type)
+    }
+    if (supported.size > 0) {
+      segmentTypes = segmentTypes.filter(t => supported.has(t))
+    }
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-2.5 space-y-2">

@@ -1283,7 +1283,7 @@ export async function processJsonDataAsync(
             return value && typeof value === 'object' && !Array.isArray(value)
           })
           regions.forEach(region => {
-            if (!regionGeographies.includes(region) && !geographies.includes(region)) {
+            if (!regionGeographies.includes(region)) {
               regionGeographies.push(region)
             }
             // Extract countries under each region (second level keys, excluding the region name itself)
@@ -1306,14 +1306,14 @@ export async function processJsonDataAsync(
       }
     }
 
-    // Add regions and countries to geographies list
+    // Add regions and countries to geographies list (dedup against existing top-level keys)
     if (regionGeographies.length > 0) {
       console.log(`Found ${regionGeographies.length} regions from "By Region":`, regionGeographies)
-      geographies = [...geographies, ...regionGeographies]
+      for (const r of regionGeographies) if (!geographies.includes(r)) geographies.push(r)
     }
     if (allCountries.length > 0) {
       console.log(`Found ${allCountries.length} countries from "By Region":`, allCountries)
-      geographies = [...geographies, ...allCountries]
+      for (const c of allCountries) if (!geographies.includes(c)) geographies.push(c)
     }
 
     console.log(`Found ${geographies.length} total geographies:`, geographies)
@@ -1360,8 +1360,10 @@ export async function processJsonDataAsync(
     })
 
     // Build geography dimension with full hierarchy
+    const regionSet = new Set(regionGeographies)
+    const countrySet = new Set(allCountries)
     const geographyDimension: GeographyDimension = {
-      global: filteredGeographies.filter(g => !regionGeographies.includes(g) && !allCountries.includes(g)),
+      global: filteredGeographies.filter(g => !regionSet.has(g) && !countrySet.has(g)),
       regions: regionGeographies,
       countries: regionToCountries,
       all_geographies: filteredGeographies

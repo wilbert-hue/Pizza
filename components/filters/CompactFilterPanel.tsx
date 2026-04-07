@@ -28,6 +28,31 @@ export function CompactFilterPanel() {
       setSelectedSegmentType(firstSegmentType)
     }
   }, [filters.segmentType, data])
+
+  // If the active segment type is not supported by the currently selected
+  // geographies, reset it. This handles e.g. switching off Italy while the
+  // Italy-only cross-segment is active.
+  useEffect(() => {
+    if (!data) return
+    const allTypes = Object.keys(data.dimensions.segments)
+    const geos = filters.geographies || []
+    if (geos.length === 0) return
+    const records = data.data?.value?.geography_segment_matrix || []
+    const supported = new Set<string>()
+    for (const r of records) {
+      if (geos.includes(r.geography)) supported.add(r.segment_type)
+    }
+    if (supported.size === 0) return
+    const visible = allTypes.filter(t => supported.has(t))
+    const active = filters.segmentType || selectedSegmentType
+    if (visible.length > 0 && active && !visible.includes(active)) {
+      const next = visible[0]
+      setSelectedSegmentType(next)
+      setSelectedSegments([])
+      updateFilters({ segmentType: next, segments: [], advancedSegments: [] } as any)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, filters.geographies, filters.segmentType])
   
   // Check if this segment type has B2B/B2C segmentation
   const segmentDimension = data?.dimensions?.segments?.[selectedSegmentType]
@@ -104,9 +129,22 @@ export function CompactFilterPanel() {
     availableSegments = segmentDimension?.items || []
   }
   
-  // Get all available segment types
+  // Get all available segment types, then drop ones that have no records for the
+  // currently selected geographies. This is what makes "Italy Cross-Segment Analysis"
+  // appear only when Italy is the selected geography.
   const allSegmentTypes = Object.keys(data.dimensions.segments)
-  const segmentTypes = allSegmentTypes
+  const selectedGeos = filters.geographies || []
+  let segmentTypes = allSegmentTypes
+  if (selectedGeos.length > 0) {
+    const records = data.data?.value?.geography_segment_matrix || []
+    const supported = new Set<string>()
+    for (const r of records) {
+      if (selectedGeos.includes(r.geography)) supported.add(r.segment_type)
+    }
+    if (supported.size > 0) {
+      segmentTypes = allSegmentTypes.filter(t => supported.has(t))
+    }
+  }
   
   // Build hierarchical options for the select
   const getHierarchicalOptions = () => {
