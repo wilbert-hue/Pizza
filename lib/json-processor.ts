@@ -1474,7 +1474,7 @@ export async function processJsonDataAsync(
     
     // Build metadata
     const metadata: Metadata = {
-      market_name: 'Pizza Market',
+      market_name: 'Pizza Base Market',
       market_type: 'Market Analysis',
       industry: 'Healthcare & Pharmaceuticals',
       years: allYears,
