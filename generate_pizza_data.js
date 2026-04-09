@@ -1,11 +1,11 @@
-// Convert Dataset-Global Pizza Market.xlsx into public/data/value.json + volume.json
-// Also injects an "Italy Cross-Segment Analysis" segment type for Italy only.
+// Convert Dataset-Global Pizza Market (Post Sales).xlsx into public/data/value.json + volume.json
+// Injects "Cross-Segment Analysis" for every country that has cross data in the workbook.
 
 const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 
-const WB = XLSX.readFile(path.join(__dirname, 'Dataset-Global Pizza Market.xlsx'));
+const WB = XLSX.readFile(path.join(__dirname, 'Dataset-Global Pizza Market (Post Sales).xlsx'));
 const YEARS = Array.from({ length: 13 }, (_, i) => 2021 + i); // 2021..2033
 
 function round(n) {
@@ -27,9 +27,7 @@ for (let i = 0; i < master.length; i++) {
   if (c0 === 'Value' || c1 === 'Value') { mode = 'value'; continue; }
   if (c0 === 'Volume' || c1 === 'Volume') { mode = 'volume'; continue; }
   if (!mode) continue;
-  if (c0 === 'Region' || c0 === 'Unit') continue;
-  // Stop when we hit the trailing Italy cross-section block (4-col key form)
-  if (c0 === 'Value' || c0 === 'Volume') continue;
+  if (c0 === 'Region' || c0 === 'Unit' || c0 === 'Country') continue;
   const region = row[0];
   const segment = row[1];
   const sub = row[2];
@@ -45,52 +43,78 @@ for (let i = 0; i < master.length; i++) {
   target[region][segment][sub] = series;
 }
 
-// ---------- Italy Cross Section Analysis ----------
-const cross = XLSX.utils.sheet_to_json(WB.Sheets['Italy Cross Section Analysis'], { header: 1, blankrows: false });
+// ---------- Cross-Section Sheets (Value + Volume) ----------
+// Structure per sheet:
+//   <Geo>         (row with null col1 — geography header)
+//   <Base>        (Ready to Eat Bases | Made From Scratch, null col1)
+//   <Channel>     (row with year values in col1+)
+//   <Pizza Type>  (row with year values in col1+, child of Channel)
+
 const BASES = new Set(['Ready to Eat Bases', 'Made From Scratch']);
-const CHANNELS = new Set([
-  'Bars/Hotels',
-  'Full-Service Restaurants (FSR)',
-  'Others ( (Institutional Food Service, etc.)',
-  'Pizzeria',
-  'Quick Service Restaurants (QSR)',
-  'Retail',
+const PIZZA_TYPES = new Set([
+  'Traditional Round Pizza', 'Pizza Romana', 'Pinsa',
+  'Other Regional / Specialty Pizza Styles',
 ]);
+const CROSS_SEG_NAME = 'Cross-Segment Analysis';
 
-const CROSS_SEG = 'Italy Cross-Segment Analysis';
-let cMode = null, cBase = null, cChannel = null;
+function parseCrossSheet(sheetName, dataTarget) {
+  const rows = XLSX.utils.sheet_to_json(WB.Sheets[sheetName], { header: 1, blankrows: false });
+  let curGeo = null, curBase = null, curChannel = null;
 
-for (let i = 0; i < cross.length; i++) {
-  const row = cross[i];
-  if (!row || row.length === 0) continue;
-  const label = row[0];
-  if (label === 'Value') { cMode = 'value'; cBase = null; cChannel = null; continue; }
-  if (label === 'Volume') { cMode = 'volume'; cBase = null; cChannel = null; continue; }
-  if (!cMode) continue;
-  if (BASES.has(label)) { cBase = label; continue; }
-  if (CHANNELS.has(label)) { cChannel = label; continue; }
-  if (!cBase || !cChannel) continue;
-  // Hierarchical with context-prefixed node names so each level is unique.
-  // (Otherwise the dashboard would sum same-named children across bases.)
-  const channelKey = `${cBase} · ${cChannel}`;
-  const leafKey = `${cBase} · ${cChannel} · ${label}`;
-  const target = cMode === 'value' ? value : volume;
-  if (!target['Italy']) target['Italy'] = {};
-  if (!target['Italy'][CROSS_SEG]) target['Italy'][CROSS_SEG] = {};
-  if (!target['Italy'][CROSS_SEG][cBase]) target['Italy'][CROSS_SEG][cBase] = {};
-  if (!target['Italy'][CROSS_SEG][cBase][channelKey]) target['Italy'][CROSS_SEG][cBase][channelKey] = {};
-  const series = {};
-  for (let y = 0; y < YEARS.length; y++) {
-    const v = row[1 + y];
-    series[String(YEARS[y])] = round(typeof v === 'number' ? v : 0);
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    const label = row[0];
+    const col1 = row[1];
+
+    // Skip title row
+    if (typeof label === 'string' && label.includes('Cross Section')) continue;
+    // Skip header row
+    if (label === 'Row Labels') continue;
+
+    if (BASES.has(label)) {
+      curBase = label; curChannel = null; continue;
+    }
+
+    // Geography header: string in col0, null/undefined in col1, not a known type
+    if (typeof label === 'string' && (col1 == null) && !BASES.has(label) && !PIZZA_TYPES.has(label)) {
+      curGeo = label; curBase = null; curChannel = null; continue;
+    }
+
+    if (!curGeo || !curBase) continue;
+
+    // Channel row: has year values, not a pizza type
+    if (typeof label === 'string' && typeof col1 === 'number' && !PIZZA_TYPES.has(label)) {
+      curChannel = label;
+      // Channel row itself IS the channel total (no nested pizza types in channel row)
+      // We still record it below if no pizza-type child follows; handled per-leaf below.
+      continue;
+    }
+
+    // Pizza Type leaf
+    if (PIZZA_TYPES.has(label) && curChannel) {
+      const channelKey = `${curBase} · ${curChannel}`;
+      const leafKey = `${curBase} · ${curChannel} · ${label}`;
+      if (!dataTarget[curGeo]) dataTarget[curGeo] = {};
+      if (!dataTarget[curGeo][CROSS_SEG_NAME]) dataTarget[curGeo][CROSS_SEG_NAME] = {};
+      if (!dataTarget[curGeo][CROSS_SEG_NAME][curBase]) dataTarget[curGeo][CROSS_SEG_NAME][curBase] = {};
+      if (!dataTarget[curGeo][CROSS_SEG_NAME][curBase][channelKey]) dataTarget[curGeo][CROSS_SEG_NAME][curBase][channelKey] = {};
+      const series = {};
+      for (let y = 0; y < YEARS.length; y++) {
+        const v = row[1 + y];
+        series[String(YEARS[y])] = round(typeof v === 'number' ? v : 0);
+      }
+      dataTarget[curGeo][CROSS_SEG_NAME][curBase][channelKey][leafKey] = series;
+    }
   }
-  target['Italy'][CROSS_SEG][cBase][channelKey][leafKey] = series;
 }
 
-// Add aggregated parent records (with _aggregated/_level markers) so the
-// dashboard shows the channel/base totals when a parent is selected, without
-// double-counting children (the data-processor explicitly excludes child leaves
-// when the aggregated parent record is also included).
+parseCrossSheet('Cross Value', value);
+parseCrossSheet('Cross Volume', volume);
+
+// ---------- Add aggregated parent records with _aggregated/_level markers ----------
+// The dashboard explicitly skips leaf children when an aggregated parent is selected,
+// preventing double-counting. Channel → sum of 4 pizza types; Base → sum of channels.
 function sumSeries(seriesList) {
   const out = {};
   for (const y of YEARS) {
@@ -100,37 +124,35 @@ function sumSeries(seriesList) {
   }
   return out;
 }
-for (const target of [value, volume]) {
-  const cs = target?.['Italy']?.[CROSS_SEG];
-  if (!cs) continue;
-  for (const base of Object.keys(cs)) {
-    const baseNode = cs[base];
-    const baseChannelTotals = [];
-    for (const chKey of Object.keys(baseNode)) {
-      const chNode = baseNode[chKey];
-      const ptSeriesList = Object.values(chNode);
-      const channelTotal = sumSeries(ptSeriesList);
-      // mark this channel node as an aggregated parent (level 3)
-      Object.assign(chNode, channelTotal);
-      chNode._aggregated = true;
-      chNode._level = 3;
-      baseChannelTotals.push(channelTotal);
+
+function addAggregatedParents(dataTarget) {
+  for (const geo of Object.keys(dataTarget)) {
+    const cs = dataTarget[geo][CROSS_SEG_NAME];
+    if (!cs) continue;
+    for (const base of Object.keys(cs)) {
+      const baseNode = cs[base];
+      const baseChannelTotals = [];
+      for (const chKey of Object.keys(baseNode)) {
+        const chNode = baseNode[chKey];
+        const ptSeriesList = Object.values(chNode).filter(v => typeof v === 'object' && !Array.isArray(v));
+        const channelTotal = sumSeries(ptSeriesList);
+        Object.assign(chNode, channelTotal);
+        chNode._aggregated = true;
+        chNode._level = 3;
+        baseChannelTotals.push(channelTotal);
+      }
+      const baseTotal = sumSeries(baseChannelTotals);
+      Object.assign(baseNode, baseTotal);
+      baseNode._aggregated = true;
+      baseNode._level = 2;
     }
-    // mark this base node as an aggregated parent (level 2)
-    const baseTotal = sumSeries(baseChannelTotals);
-    Object.assign(baseNode, baseTotal);
-    baseNode._aggregated = true;
-    baseNode._level = 2;
   }
 }
-// Note: don't add self-referencing leaves — the dashboard sums descendants
-// when a parent is selected, so adding parent leaves causes double counting.
 
+addAggregatedParents(value);
+addAggregatedParents(volume);
 
 // ---------- Build geography hierarchy under "By Region" ----------
-// The dashboard's processor expects nested structure:
-//   Global['By Region'][region][country] = { 2021: n, ... }
-// so it can extract regions + countries as additional geographies.
 const REGION_COUNTRIES = {
   'North America': ['U.S.', 'Canada'],
   'Europe': ['Norway', 'UK', 'Germany', 'Romania', 'Italy', 'France', 'Spain', 'Russia', 'Switzerland', 'Sweden', 'Finland', 'Rest of Europe'],
@@ -141,7 +163,6 @@ const REGION_COUNTRIES = {
 };
 
 function pizzaTypeTotal(target, geo) {
-  // Sum of Pizza Type sub-segments per year = total geography series
   const seg = target?.[geo]?.['Pizza Type'];
   if (!seg) return null;
   const out = {};
@@ -154,12 +175,10 @@ function pizzaTypeTotal(target, geo) {
 }
 
 function buildByRegion(target) {
-  // Rebuild Global -> By Region -> region -> country = totals
   if (!target['Global']) return;
   target['Global']['By Region'] = {};
   for (const [region, countries] of Object.entries(REGION_COUNTRIES)) {
     const node = {};
-    // region-level total (under same name, matches processor's "redundant" pattern)
     const regionTotal = pizzaTypeTotal(target, region);
     if (regionTotal) node[region] = regionTotal;
     for (const c of countries) {
@@ -168,7 +187,6 @@ function buildByRegion(target) {
     }
     target['Global']['By Region'][region] = node;
   }
-  // Also expose By Region inside each parent region so country drilldown works
   for (const [region, countries] of Object.entries(REGION_COUNTRIES)) {
     if (!target[region]) continue;
     target[region]['By Region'] = { [region]: {} };
@@ -182,14 +200,22 @@ function buildByRegion(target) {
 buildByRegion(value);
 buildByRegion(volume);
 
+// ---------- Write output ----------
 const outDir = path.join(__dirname, 'public', 'data');
 fs.writeFileSync(path.join(outDir, 'value.json'), JSON.stringify(value));
 fs.writeFileSync(path.join(outDir, 'volume.json'), JSON.stringify(volume));
-
-// Use the full value structure as segmentation_analysis so the processor can
-// extract the geography hierarchy (regions/countries under By Region).
 fs.writeFileSync(path.join(outDir, 'segmentation_analysis.json'), JSON.stringify(value));
 
-console.log('Regions:', Object.keys(value).length);
-console.log('Italy segs:', Object.keys(value['Italy'] || {}));
-console.log('Italy cross sub count:', Object.keys((value['Italy'] || {})[CROSS_SEG] || {}).length);
+// Summary
+const crossGeos = Object.keys(value).filter(g => value[g][CROSS_SEG_NAME]);
+console.log('Total regions:', Object.keys(value).length);
+console.log('Geographies with Cross-Segment Analysis:', crossGeos);
+for (const g of crossGeos) {
+  const cs = value[g][CROSS_SEG_NAME];
+  const bases = Object.keys(cs);
+  const leafCount = bases.reduce((a, b) => {
+    const channels = Object.keys(cs[b]).filter(k => typeof cs[b][k] === 'object' && cs[b][k]._level === 3);
+    return a + channels.reduce((ca, ch) => ca + Object.keys(cs[b][ch]).filter(k => !/^\d{4}$/.test(k) && k !== '_aggregated' && k !== '_level').length, 0);
+  }, 0);
+  console.log(` ${g}: ${bases.length} bases, ${leafCount} leaves`);
+}
