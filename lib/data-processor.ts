@@ -256,7 +256,7 @@ export function filterData(
       // Use dynamic region-to-country mapping from data if available, with fallback
       const regionToCountriesMap: Record<string, string[]> = geographyCountries || {
         'North America': ['U.S.', 'Canada'],
-        'Europe': ['U.K.', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
+        'Europe': ['U.K.', 'UK', 'Republic of Ireland', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
         'Asia Pacific': ['China', 'India', 'Japan', 'South Korea', 'ASEAN', 'Australia', 'Rest of Asia Pacific'],
         'Latin America': ['Brazil', 'Argentina', 'Mexico', 'Rest of Latin America'],
         'Middle East & Africa': ['GCC', 'South Africa', 'Rest of Middle East & Africa']
@@ -970,7 +970,7 @@ export function prepareGroupedBarData(
         // Region to countries mapping for parent geography aggregation
         const regionToCountriesStacked: Record<string, string[]> = {
           'North America': ['U.S.', 'Canada'],
-          'Europe': ['U.K.', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
+          'Europe': ['U.K.', 'UK', 'Republic of Ireland', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
           'Asia Pacific': ['China', 'India', 'Japan', 'South Korea', 'ASEAN', 'Australia', 'Rest of Asia Pacific'],
           'Latin America': ['Brazil', 'Argentina', 'Mexico', 'Rest of Latin America'],
           'Middle East & Africa': ['GCC', 'South Africa', 'Rest of Middle East & Africa']
@@ -1072,7 +1072,7 @@ export function prepareGroupedBarData(
           // if the parent is selected (e.g., U.S. + Canada data shown as "North America")
           const regionToCountries: Record<string, string[]> = {
             'North America': ['U.S.', 'Canada'],
-            'Europe': ['U.K.', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
+            'Europe': ['U.K.', 'UK', 'Republic of Ireland', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
             'Asia Pacific': ['China', 'India', 'Japan', 'South Korea', 'ASEAN', 'Australia', 'Rest of Asia Pacific'],
             'Latin America': ['Brazil', 'Argentina', 'Mexico', 'Rest of Latin America'],
             'Middle East & Africa': ['GCC', 'South Africa', 'Rest of Middle East & Africa']
@@ -1275,7 +1275,7 @@ export function prepareLineChartData(
         // Map child geographies to their parent if parent is selected
         const regionToCountriesLine: Record<string, string[]> = {
           'North America': ['U.S.', 'Canada'],
-          'Europe': ['U.K.', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
+          'Europe': ['U.K.', 'UK', 'Republic of Ireland', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
           'Asia Pacific': ['China', 'India', 'Japan', 'South Korea', 'ASEAN', 'Australia', 'Rest of Asia Pacific'],
           'Latin America': ['Brazil', 'Argentina', 'Mexico', 'Rest of Latin America'],
           'Middle East & Africa': ['GCC', 'South Africa', 'Rest of Middle East & Africa']
@@ -1811,7 +1811,7 @@ export function prepareIntelligentMultiLevelData(
   // Region to countries mapping for geography-mode
   const regionToCountries: Record<string, string[]> = {
     'North America': ['U.S.', 'Canada'],
-    'Europe': ['U.K.', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
+    'Europe': ['U.K.', 'UK', 'Republic of Ireland', 'Germany', 'Italy', 'France', 'Spain', 'Russia', 'Rest of Europe'],
     'Asia Pacific': ['China', 'India', 'Japan', 'South Korea', 'ASEAN', 'Australia', 'Rest of Asia Pacific'],
     'Latin America': ['Brazil', 'Argentina', 'Mexico', 'Rest of Latin America'],
     'Middle East & Africa': ['GCC', 'South Africa', 'Rest of Middle East & Africa']

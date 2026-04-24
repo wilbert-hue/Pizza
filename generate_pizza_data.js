@@ -1,11 +1,11 @@
-// Convert Dataset-Global Pizza Market (Post Sales).xlsx into public/data/value.json + volume.json
+// Convert Dataset-Global Pizza Base Market.xlsx into public/data/value.json + volume.json
 // Injects "Cross-Segment Analysis" for every country that has cross data in the workbook.
 
 const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 
-const WB = XLSX.readFile(path.join(__dirname, 'Dataset-Global Pizza Market (Post Sales).xlsx'));
+const WB = XLSX.readFile(path.join(__dirname, 'Dataset-Global Pizza Base Market.xlsx'));
 const YEARS = Array.from({ length: 13 }, (_, i) => 2021 + i); // 2021..2033
 
 function round(n) {
@@ -155,7 +155,7 @@ addAggregatedParents(volume);
 // ---------- Build geography hierarchy under "By Region" ----------
 const REGION_COUNTRIES = {
   'North America': ['U.S.', 'Canada'],
-  'Europe': ['Norway', 'UK', 'Germany', 'Romania', 'Italy', 'France', 'Spain', 'Russia', 'Switzerland', 'Sweden', 'Finland', 'Rest of Europe'],
+  'Europe': ['Norway', 'UK', 'Republic of Ireland', 'Germany', 'Romania', 'Italy', 'France', 'Spain', 'Russia', 'Switzerland', 'Sweden', 'Finland', 'Rest of Europe'],
   'Asia Pacific': ['China', 'India', 'Japan', 'South Korea', 'ASEAN', 'Australia', 'New Zealand', 'Rest of Asia Pacific'],
   'Latin America': ['Brazil', 'Argentina', 'Mexico', 'Rest of Latin America'],
   'Middle East': ['GCC Countries', 'Rest of Middle East'],
